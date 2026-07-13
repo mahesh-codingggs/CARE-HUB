@@ -55,8 +55,8 @@
         { key: "bill", label: "Bill", render: r => r.bill ? `#${r.bill.billId} — ${r.bill.patient ? r.bill.patient.name : ""}` : "—" },
         { key: "medicine", label: "Medicine", render: r => r.medicine ? r.medicine.medicineName : "—" },
         { key: "quantity", label: "Quantity" },
-        { key: "unitPrice", label: "Unit Price" },
-        { key: "totalPrice", label: "Total Price" },
+        { key: "unitPrice", label: "Unit Price", render: r => r.unitPrice !== null ? "₹" + r.unitPrice.toFixed(2) : "—" },
+        { key: "totalPrice", label: "Total Price", render: r => r.totalPrice !== null ? "₹" + r.totalPrice.toFixed(2) : "—" },
       ],
       searchKeys: [],
       fields: [

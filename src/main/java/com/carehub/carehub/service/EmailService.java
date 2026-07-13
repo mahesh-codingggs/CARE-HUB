@@ -41,7 +41,7 @@ public class EmailService {
             return true;
         } catch (Exception ex) {
             // No SMTP configured in this environment, or delivery failed — don't crash the request.
-            System.err.println("CareHub: could not send supplier email — " + ex.getMessage());
+        	ex.printStackTrace();
             return false;
         }
     }

@@ -77,7 +77,7 @@
       { key: "lowStockCount", label: "Low Stock Alerts", roles: ["Admin","Pharmacist"], badge: "red" },
       { key: "expiringSoonCount", label: "Expiring Medicines", roles: ["Admin","Pharmacist"], badge: "orange" },
       { key: "pendingBills", label: "Pending Bills", roles: ["Admin","Receptionist"] },
-      { key: "totalRevenue", label: "Total Revenue (Rs.)", roles: ["Admin"], money: true },
+      { key: "totalRevenue", label: "Total Revenue", roles: ["Admin"], money: true },
       { key: "aiUrgentAlerts", label: "AI Notifications", roles: ["Admin","Pharmacist"], badge: "red" },
       { key: "totalPrescriptions", label: "Total Prescriptions", roles: ["Admin","Doctor","Pharmacist"] },
       { key: "totalSuppliers", label: "Total Suppliers", roles: ["Admin","Pharmacist"] },
@@ -99,7 +99,7 @@
           const el = document.getElementById(`stat_${s.key}`);
           if (!el) return;
           let val = data[s.key];
-          if (s.money && val != null) val = Number(val).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+          if (s.money && val != null) val = "₹" + Number(val).toLocaleString("en-IN", { maximumFractionDigits: 0 });
           el.textContent = val ?? "-";
           if (s.badge && Number(data[s.key]) > 0) el.classList.add("num-" + s.badge);
         });

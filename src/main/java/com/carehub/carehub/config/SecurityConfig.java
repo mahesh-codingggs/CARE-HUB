@@ -133,8 +133,10 @@ public class SecurityConfig {
                 // Inventory: Admin + Pharmacist only
                 .requestMatchers("/api/inventory/**").hasAnyRole("ADMIN", "PHARMACIST")
 
-                // Prescriptions: Admin + Doctor manage, Pharmacist can view (to dispense)
+                // Prescriptions: Admin + Doctor manage, Pharmacist can view (to dispense), Patient can view their own
+                .requestMatchers(HttpMethod.GET, "/api/prescriptions/by-patient/*").hasAnyRole("ADMIN", "DOCTOR", "PHARMACIST", "PATIENT")
                 .requestMatchers(HttpMethod.GET, "/api/prescriptions/**").hasAnyRole("ADMIN", "DOCTOR", "PHARMACIST")
+                .requestMatchers(HttpMethod.GET, "/api/prescription-items/by-prescription/*").hasAnyRole("ADMIN", "DOCTOR", "PHARMACIST", "PATIENT")
                 .requestMatchers(HttpMethod.GET, "/api/prescription-items/**").hasAnyRole("ADMIN", "DOCTOR", "PHARMACIST")
                 .requestMatchers(HttpMethod.POST, "/api/prescriptions/**").hasAnyRole("ADMIN", "DOCTOR")
                 .requestMatchers(HttpMethod.POST, "/api/prescription-items/**").hasAnyRole("ADMIN", "DOCTOR")
@@ -143,11 +145,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.DELETE, "/api/prescriptions/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/prescription-items/**").hasRole("ADMIN")
 
-                // Billing: Admin + Receptionist only
+                // Billing: Admin + Receptionist only, Patient can view their own
+                .requestMatchers(HttpMethod.GET, "/api/bills/by-patient/*").hasAnyRole("ADMIN", "RECEPTIONIST", "PATIENT")
+                .requestMatchers(HttpMethod.GET, "/api/bill-items/by-bill/*").hasAnyRole("ADMIN", "RECEPTIONIST", "PATIENT")
                 .requestMatchers("/api/bills/**").hasAnyRole("ADMIN", "RECEPTIONIST")
                 .requestMatchers("/api/bill-items/**").hasAnyRole("ADMIN", "RECEPTIONIST")
 
-                // Patients: Admin, Doctor, Receptionist can view; Admin + Receptionist can create/edit; Admin deletes
+                // Patients: Admin, Doctor, Receptionist can view; Admin + Receptionist can create/edit; Admin deletes; Patient views their own
+                .requestMatchers(HttpMethod.GET, "/api/patients/*").hasAnyRole("ADMIN", "DOCTOR", "RECEPTIONIST", "PATIENT")
                 .requestMatchers(HttpMethod.GET, "/api/patients/**").hasAnyRole("ADMIN", "DOCTOR", "RECEPTIONIST")
                 .requestMatchers(HttpMethod.POST, "/api/patients/**").hasAnyRole("ADMIN", "RECEPTIONIST")
                 .requestMatchers(HttpMethod.PUT, "/api/patients/**").hasAnyRole("ADMIN", "RECEPTIONIST")

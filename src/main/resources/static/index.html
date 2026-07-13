@@ -7,7 +7,12 @@
 <body>
   <script src="js/auth.js"></script>
   <script>
-    window.location.href = currentUser() ? "dashboard.html" : "login.html";
+    const user = currentUser();
+    if (user) {
+      window.location.href = user.role === "Patient" ? "patient-dashboard.html" : "dashboard.html";
+    } else {
+      window.location.href = "login.html";
+    }
   </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 const NAV_ITEMS = [
   { href: "dashboard.html", label: "Dashboard", key: "dashboard", roles: ["Admin", "Doctor", "Receptionist", "Pharmacist"] },
+  { href: "patient-dashboard.html", label: "My Health Record", key: "patient-dashboard", roles: ["Patient"] },
   { href: "patients.html", label: "Patients", key: "patients", roles: ["Admin", "Doctor", "Receptionist"] },
   { href: "doctors.html", label: "Doctors", key: "doctors", roles: ["Admin", "Doctor", "Receptionist"] },
   { href: "prescriptions.html", label: "Prescriptions", key: "prescriptions", roles: ["Admin", "Doctor", "Pharmacist"] },
@@ -33,7 +34,7 @@ function renderSidebar(activeKey) {
     <div class="brand">Care<span>Hub</span></div>
     <nav>${links}</nav>
     <div class="user-box">
-      Logged in as <strong>${user ? user.username : ""}</strong><br/>
+      Logged in as <strong>${user ? (user.name || user.username) : ""}</strong><br/>
       <span class="role">${user ? user.role : ""}</span><br/>
       <span class="logout-btn" onclick="logout()">Log out</span>
     </div>
@@ -45,7 +46,7 @@ function renderSidebar(activeKey) {
   if (role && activeKey) {
     const current = NAV_ITEMS.find(i => i.key === activeKey);
     if (current && !current.roles.includes(role)) {
-      window.location.href = "dashboard.html";
+      window.location.href = role === "Patient" ? "patient-dashboard.html" : "dashboard.html";
     }
   }
 }

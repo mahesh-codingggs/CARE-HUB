@@ -1,7 +1,9 @@
 package com.carehub.carehub.controller;
 
 import com.carehub.carehub.entity.User;
+import com.carehub.carehub.entity.Patient;
 import com.carehub.carehub.repository.UserRepository;
+import com.carehub.carehub.repository.PatientRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -40,6 +43,9 @@ public class AuthController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private PatientRepository patientRepository;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> body, HttpServletRequest request) {
@@ -82,9 +88,64 @@ public class AuthController {
         if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getPrincipal())) {
             return errorResponse(HttpStatus.UNAUTHORIZED, "Not signed in");
         }
+        
+        // Check if patient
+        boolean isPatient = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_PATIENT"));
+        if (isPatient) {
+            Optional<Patient> patient = patientRepository.findByPhone(auth.getName());
+            return patient.<ResponseEntity<?>>map(p -> ResponseEntity.ok(toPatientInfo(p)))
+                    .orElseGet(() -> errorResponse(HttpStatus.UNAUTHORIZED, "Not signed in"));
+        }
+
         Optional<User> user = userRepository.findByUsernameIgnoreCase(auth.getName());
         return user.<ResponseEntity<?>>map(u -> ResponseEntity.ok(toUserInfo(u)))
                 .orElseGet(() -> errorResponse(HttpStatus.UNAUTHORIZED, "Not signed in"));
+    }
+
+    @PostMapping("/patient-login")
+    public ResponseEntity<?> patientLogin(@RequestBody Map<String, String> body, HttpServletRequest request) {
+        String phone = body.get("phone");
+        String dobString = body.get("dob"); // Expected format: YYYY-MM-DD
+
+        if (phone == null || phone.isBlank() || dobString == null || dobString.isBlank()) {
+            return errorResponse(HttpStatus.BAD_REQUEST, "Phone number and Date of Birth are required");
+        }
+
+        try {
+            LocalDate dob = LocalDate.parse(dobString);
+            Optional<Patient> patientOpt = patientRepository.findByPhone(phone);
+
+            if (patientOpt.isEmpty() || !patientOpt.get().getDateOfBirth().equals(dob)) {
+                return errorResponse(HttpStatus.UNAUTHORIZED, "Invalid phone number or Date of Birth");
+            }
+
+            Patient patient = patientOpt.get();
+
+            // Create authentication with ROLE_PATIENT
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    patient.getPhone(), null, java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT")));
+
+            SecurityContext context = SecurityContextHolder.createEmptyContext();
+            context.setAuthentication(authentication);
+            SecurityContextHolder.setContext(context);
+
+            HttpSession session = request.getSession(true);
+            session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, context);
+
+            return ResponseEntity.ok(toPatientInfo(patient));
+        } catch (Exception ex) {
+            return errorResponse(HttpStatus.BAD_REQUEST, "Invalid date format. Expected YYYY-MM-DD.");
+        }
+    }
+
+    private Map<String, Object> toPatientInfo(Patient patient) {
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("patientId", patient.getPatientId());
+        resp.put("username", patient.getPhone());
+        resp.put("role", "Patient");
+        resp.put("name", patient.getName());
+        return resp;
     }
 
     /**

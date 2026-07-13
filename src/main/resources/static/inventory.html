@@ -56,7 +56,7 @@
         { key: "supplier", label: "Supplier", render: r => r.supplier ? r.supplier.supplierName : "—" },
         { key: "batchNo", label: "Batch No" },
         { key: "expiryDate", label: "Expiry Date" },
-        { key: "unitPrice", label: "Unit Price" },
+        { key: "unitPrice", label: "Unit Price", render: r => r.unitPrice !== null ? "₹" + r.unitPrice.toFixed(2) : "—" },
         { key: "availableStock", label: "Available Stock",
           render: r => `<span class="badge ${r.availableStock <= r.minimumStock ? 'badge-red' : 'badge-green'}">${r.availableStock}</span>` },
         { key: "minimumStock", label: "Minimum Stock" },
