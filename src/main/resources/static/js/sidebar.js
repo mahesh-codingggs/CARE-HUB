@@ -1,3 +1,13 @@
+// Initialize Dark Theme on load (prevents theme flashing)
+(function() {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark") {
+    document.body.classList.add("dark");
+  } else {
+    document.body.classList.remove("dark");
+  }
+})();
+
 const NAV_ITEMS = [
   { href: "dashboard.html", label: "Dashboard", key: "dashboard", roles: ["Admin", "Doctor", "Receptionist", "Pharmacist"] },
   { href: "patient-dashboard.html", label: "My Health Record", key: "patient-dashboard", roles: ["Patient"] },
@@ -16,6 +26,17 @@ const NAV_ITEMS = [
   { href: "users.html", label: "Users / Staff", key: "users", roles: ["Admin"] },
 ];
 
+function toggleGlobalTheme() {
+  const checkbox = document.getElementById("themeToggleCheckbox");
+  if (checkbox && checkbox.checked) {
+    document.body.classList.add("dark");
+    localStorage.setItem("theme", "dark");
+  } else {
+    document.body.classList.remove("dark");
+    localStorage.setItem("theme", "light");
+  }
+}
+
 function renderSidebar(activeKey) {
   const mount = document.getElementById("sidebar");
   if (!mount) return;
@@ -30,6 +51,8 @@ function renderSidebar(activeKey) {
     return `<a href="${item.href}" class="${cls}">${item.label}</a>`;
   }).join("");
 
+  const isDark = localStorage.getItem("theme") === "dark";
+
   mount.innerHTML = `
     <div class="brand">Care<span>Hub</span></div>
     <nav>${links}</nav>
@@ -37,6 +60,13 @@ function renderSidebar(activeKey) {
       Logged in as <strong>${user ? (user.name || user.username) : ""}</strong><br/>
       <span class="role">${user ? user.role : ""}</span><br/>
       <span class="logout-btn" onclick="logout()">Log out</span>
+      <div class="theme-toggle-container">
+        <span>Dark Mode</span>
+        <label class="theme-switch">
+          <input type="checkbox" id="themeToggleCheckbox" ${isDark ? "checked" : ""} onclick="toggleGlobalTheme()">
+          <span class="theme-slider"></span>
+        </label>
+      </div>
     </div>
   `;
 

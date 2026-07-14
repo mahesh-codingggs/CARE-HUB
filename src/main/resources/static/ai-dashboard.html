@@ -68,11 +68,18 @@
         }
         mount.innerHTML = withUsage.slice(0, 8).map(r => {
           const urgent = r.daysUntilOutOfStock !== null && r.daysUntilOutOfStock <= 7;
+          let trendClass = "pill-approved";
+          if (r.trend === "Surging") trendClass = "pill-rejected";
+          else if (r.trend === "Declining") trendClass = "pill-pending";
+
           return `
           <div class="ai-card">
             <div class="ai-card-head">
               <h4>${r.medicineName}</h4>
-              <span class="pill ${urgent ? "pill-rejected" : "pill-approved"}">${r.prediction}</span>
+              <div style="display: flex; gap: 8px;">
+                <span class="pill ${trendClass}">${r.trendLabel}</span>
+                <span class="pill ${urgent ? "pill-rejected" : "pill-approved"}">${r.prediction}</span>
+              </div>
             </div>
             <div class="ai-note">Current stock: ${r.currentStock} &middot; Avg. daily usage: ${r.averageDailyUsage} units/day</div>
           </div>`;

@@ -37,11 +37,16 @@ public class AiService {
 
     /** Average units of a medicine dispensed per day over the trailing usage window. */
     public double averageDailyUsage(Long medicineId) {
-        LocalDateTime since = LocalDateTime.now().minusDays(USAGE_WINDOW_DAYS);
+        return averageDailyUsageSince(medicineId, USAGE_WINDOW_DAYS);
+    }
+
+    /** Average units of a medicine dispensed per day over a custom trailing window of days. */
+    public double averageDailyUsageSince(Long medicineId, int days) {
+        LocalDateTime since = LocalDateTime.now().minusDays(days);
         int totalUsed = billItemRepository.findByMedicineSince(medicineId, since).stream()
                 .mapToInt(bi -> bi.getQuantity() == null ? 0 : bi.getQuantity())
                 .sum();
-        return totalUsed / (double) USAGE_WINDOW_DAYS;
+        return totalUsed / (double) days;
     }
 
     private int currentStock(Long medicineId) {
@@ -50,26 +55,49 @@ public class AiService {
                 .sum();
     }
 
-    /** AI Stock Prediction: for every medicine with usage history, predicts days until stockout. */
+    /** AI Stock Prediction: for every medicine with usage history, predicts days until stockout and trends. */
     public List<Map<String, Object>> stockPredictions() {
         List<Medicine> medicines = medicineRepository.findAll();
         List<Map<String, Object>> results = new ArrayList<>();
 
         for (Medicine m : medicines) {
-            double avgUsage = averageDailyUsage(m.getMedicineId());
+            double avgUsage30 = averageDailyUsage(m.getMedicineId());
+            double avgUsage7 = averageDailyUsageSince(m.getMedicineId(), 7);
             int stock = currentStock(m.getMedicineId());
 
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("medicineId", m.getMedicineId());
             row.put("medicineName", m.getMedicineName());
             row.put("currentStock", stock);
-            row.put("averageDailyUsage", round2(avgUsage));
+            row.put("averageDailyUsage", round2(avgUsage30));
 
-            if (avgUsage <= 0) {
+            // Trend detection logic
+            String trend = "Stable";
+            String trendLabel = "Stable Demand ➡️";
+            if (avgUsage30 > 0) {
+                double ratio = avgUsage7 / avgUsage30;
+                if (ratio >= 1.30) {
+                    trend = "Surging";
+                    trendLabel = "Surging Demand 📈";
+                } else if (ratio <= 0.70) {
+                    trend = "Declining";
+                    trendLabel = "Declining Demand 📉";
+                }
+            } else if (avgUsage7 > 0) {
+                trend = "Surging";
+                trendLabel = "New Demand Surge 📈";
+            } else {
+                trend = "Stable";
+                trendLabel = "No Active Demand ➡️";
+            }
+            row.put("trend", trend);
+            row.put("trendLabel", trendLabel);
+
+            if (avgUsage30 <= 0) {
                 row.put("daysUntilOutOfStock", null);
                 row.put("prediction", stock > 0 ? "Stable — no recent usage recorded" : "No stock, no recent demand");
             } else {
-                int daysLeft = (int) Math.floor(stock / avgUsage);
+                int daysLeft = (int) Math.floor(stock / avgUsage30);
                 row.put("daysUntilOutOfStock", daysLeft);
                 row.put("prediction", "Out of Stock in " + daysLeft + " Day" + (daysLeft == 1 ? "" : "s"));
             }
